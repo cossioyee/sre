@@ -1,34 +1,17 @@
-$vmsEncendidas = @(Get-VM | Where-Object {$_.State -eq "Running"} | Select-Object -ExpandProperty Name)
+$vmsEncendidas = @(Get-VM | Select-Object -ExpandProperty Name)
 foreach ($vm in $vmsEncendidas) {
-	$CPname = @(Get-VMCheckpoint -VMName $vm | Select-Object -ExpandProperty Name)
-	foreach ($cp in $CPname) {
-		createcp $cp
-	}
+	$estado = @(Get-VM -VMName $vm | Select-Object -ExpandProperty State)
+	if ($estado -eq "OFF"){
+        Write-Host "Encendiendo..."
+        Start-VM -Name $vm
+        Start-Sleep -Seconds 20
+        $estado = @(Get-VM -VMName $vm | Select-Object -ExpandProperty State)
+        Write-Host "Estado actual de $vm -> $estado"      
+    }elseif ($estado -eq "Running"){
+        Write-Host "Apagando"
+        Stop-VM -Name $vm
+        Start-Sleep -Seconds 20
+        $estado = @(Get-VM -VMName $vm | Select-Object -ExpandProperty State)
+        Write-Host "Estado actual de $vm -> $estado"
+    }
 }
-
-
-function deletecp {
-  [Parameter(Mandatory=$true)]
-  [string]
-  $vm  
-  
-  [Parameter(Mandatory=$true)]
-  [string]
-  $cp
-
-  Remove-VMCheckpoint -VMName $vm -Name $cp
-}
-
-
-function createcp {
-  [Parameter(Mandatory=$true)]
-  [string]
-  $vm
-
-  Checkpoint-VM -Name $vm
-}
-
-Select-String -Path "C:\Users\Admin\Desktop\PH\*.vcx" -Pattern "error"
-Get-Item "C:\Users\Admin\Desktop\PH\*.vcx"
-Find-File -Path "C:\Users\Admin\Desktop\PH" -Name "*.vmcx" -Recurse
-
